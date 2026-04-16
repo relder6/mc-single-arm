@@ -127,5 +127,4 @@ c         write(6,*) str_line
          endif
          write(6,1003) eprime,thetain,xbj,Q2,W,xsecvert,xsecvertcc
       enddo
- 1003 format(1x,f6.4,4x,f7.4,3(4x,f6.4),4x,e11.5,4x,e11.5)
-      end
+ 1003 format(1x,f10.6,4x,f11.6,3(4x,f10.6),4x,e14.6,4x,e14.6)

@@ -1,31 +1,31 @@
 !------------------------------------------------------------------------------
 ! Input file for MC_SINGLE_ARM 					
 !------------------------------------------------------------------------------
-  1000000	Monte-Carlo trials
+  10000000	Monte-Carlo trials
         1       Spectrometer (1=HMS, 2=SHMS, 3=..)
-     3382.4	Spectrometer momentum (in MeV/c)
-     20.0974	Spectrometer angle (in degrees)C
+     1531	Spectrometer momentum (in MeV/c)
+     29.045	Spectrometer angle (in degrees)
     -10.0	M.C. DP/P  down limit 
      10.0	M.C. DP/P  up   limit 
-    -65.0	M.C. Theta ( dy/dz) down limit (mr)
-     65.0	M.C. Theta down limit (mr)
+    -100.0	M.C. Theta ( dy/dz) down limit (mr)
+     100.0	M.C. Theta down limit (mr)
     -100.0	M.C. Phi (dx/dz)  down limit (mr)
      100.0	M.C. Phi   down limit (mr)C
      0.060	Horiz beam spot size in cm (Full width of +/- 3 sigma)
      0.060	Vert  beam spot size in cm (Full width of +/- 3 sigma)
-     9.9508  	Length of target (Full width, cm)
+     0.48507  	Length of target (Full width, cm), using rho = 2.210 g/cm-3
      0.2        Raster full-width x (cm)
      0.2        Raster full-width y (cm)
      100.0	DP/P  reconstruction cut (half width in % )
      100.0	Theta reconstruction cut (half width in mr)
      100.0	Phi   reconstruction cut (half width in mr)
      100.0	ZTGT  reconstruction cut (Half width in cm)
-     890.5	one radiation length of target material (in cm)
+     19.32	one radiation length of target material (in cm)
      0.0        Beam x offset (cm)  +x = beam left
      0.0	Beam y offset (cm)  +y = up
-     0.         Target z offset (cm)+z = downstream
-     0.1077     Spectrometer x offset (cm) +x = down
-     0.1290     Spectrometer y offset (cm)
+     0.0        Target z offset (cm)+z = downstream
+     0.00       Spectrometer x offset (cm) +x = down
+     0.00       Spectrometer y offset (cm)
      0.0        Spectrometer z offset (cm)
      0.0        Spectrometer xp offset (mr)
      0.0        Spectrometer yp offset (mr)
@@ -35,10 +35,10 @@
      0	        flag for storing all events (including failed events with stop_id > 0)
      0          doing elastic?
      1          using RC tables?
-     10551      ebeam in MeV
+     8583.1       ebeam in MeV
      0          flag for sieve
-     1.00794    target A
-     0.716664   target thickness in g/cm2
-     612         number of momentum bins in RC table
-     131         number of theta bins in RC table
-     xem2_emc_rc_h2cryo22_hms.out      RC table name
+     12.0107   	target A
+     1.070     	target thickness in g/cm2, rho * t
+     381        number of momentum bins in RC table
+     128        number of theta bins in RC table
+     rsidis_4pass_12carbon25_hms.out    RC table name
