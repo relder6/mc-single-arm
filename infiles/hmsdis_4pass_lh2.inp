@@ -21,11 +21,11 @@
      100.0	Phi   reconstruction cut (half width in mr)
      100.0	ZTGT  reconstruction cut (Half width in cm)
      890.4	one radiation length of target material (in cm)
-     0.0        Beam x offset (cm)  +x = beam left
-     0.0	Beam y offset (cm)  +y = up
-     0.0        Target z offset (cm)+z = downstream
-     0.00       Spectrometer x offset (cm) +x = down
-     0.00       Spectrometer y offset (cm)
+     0.0230     Beam x offset (cm)  +x = beam left
+     0.0118	Beam y offset (cm)  +y = up
+     -0.6868    Target z offset (cm)+z = downstream
+     -0.088     Spectrometer x offset (cm) +x = down
+     -0.186     Spectrometer y offset (cm)
      0.0        Spectrometer z offset (cm)
      0.0        Spectrometer xp offset (mr)
      0.0        Spectrometer yp offset (mr)
