@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+
+import os, re, sys
+import numpy as np
+
+beam_passes = ["3pass_phaseII", "4pass_phaseI", "5pass_phaseI"]
+targets = ["al", "c", "cu", "ld2", "lh2", "dummy_up", "dummy_down"]
+
+infile_dir = "../infiles"
+
+ntrials = 10000000
+
+spec = 1
+
+ebeams = {"3pass_phaseII": 6449,
+          "4pass_phaseI": 8583.1,
+          "5pass_phaseI": 10671.6}
+
+angles = {"3pass_phaseII": 44.830,
+          "4pass_phaseI": 29.045,
+          "5pass_phaseI": 16.750}
+
+# mapping beam pass and phase to spectrometer momentum in MeV/c
+momenta = {"3pass_phaseII": 1165,
+           "4pass_phaseI": 1531,
+           "5pass_phaseI": 3642}
+
+# atomic masses,
+As = {"al": 26.9815,
+      "c": 12.0107,
+      "cu": 63.5460,
+      "lh2": 1.0080,
+      "ld2": 2.0141,
+      "dummy_up": 26.9815,
+      "dummy_down": 26.9815}
+
+# thicknesses in g/cm^2
+phaseI_thicknesses = {"al": 0.350,
+                      "c": 1.072,
+                      "cu": 0.76,
+                      "lh2": 0.7194,
+                      "ld2": 1.6584,
+                      "dummy_up": 0.3470,
+                      "dummy_down": 0.3460}
+phaseII_thicknesses = {"al": 0.369,
+                       "c": 1.107,
+                       "cu": 0.905,
+                       "lh2": 0.7194,
+                       "ld2": 1.6584,
+                       "dummy_up": 0.0,
+                       "dummy_down": 0.0,}
+thicknesses = {"4pass_phaseI": phaseI_thicknesses,
+               "5pass_phaseI": phaseI_thicknesses,
+               "3pass_phaseII": phaseII_thicknesses,}
+
+# one rad length of target material in cm
+rad_lengths = {"c": 19.320,
+               "cu": 1.436,
+               "al": 8.897,
+               "lh2": 890.400,
+               "ld2": 769.1,
+               "dummy_up": 8.897,
+               "dummy_down": 8.897}
+
+# absolute densities,
+densities = {"c": 2.210,
+             "cu": 8.960,
+             "al": 2.810,
+             "lh2": 0.072474,
+             "ld2": 0.16704,
+             "dummy_up": 2.810,
+             "dummy_down": 2.810}
+
+# beam offsets, comes from calibrated bpms
+phaseI_beam_offsets = {"x": 0.0230,
+                       "y": 0.0118}
+phaseII_beam_offsets = {"x": 0.0,
+                        "y": 0.0}
+beam_offsets = {"4pass_phaseI": phaseI_beam_offsets,
+                "5pass_phaseI": phaseI_beam_offsets,
+                "3pass_phaseII": phaseII_beam_offsets,}
+
+# target z offset
+phaseI_ztgt = {"al": -0.5511,
+               "c": -0.2646,
+               "cu": -0.5348,
+               "lh2": -0.6868,
+               "ld2": -0.6540,
+               "dummy_up": -5.6503,
+               "dummy_down":4.5494}
+phaseII_ztgt = {"al": 0.0,
+                "c": 0.0,
+                "cu": 0.0,
+                "lh2": 0.0,
+                "ld2": 0.0,
+                "dummy_up": 0.0,
+                "dummy_down": 0.0,}
+ztgt_offsets = {"4pass_phaseI": phaseI_ztgt,
+                "5pass_phaseI": phaseI_ztgt,
+                "3pass_phaseII": phaseII_ztgt,}
+
+# # counting bins in rctables
+# phaseI_nbins = {"momentum_bins": 381,
+#                 "theta_bins": 128}
+# phaseII_nbins = {"momentum_bins": 37,
+#                  "theta_bins": 151}
+# nbins = {"4pass_phaseI": phaseI_nbins,
+#          "5pass_phaseI": phaseI_nbins,
+#          "3pass_phaseII": phaseII_nbins,}
+
+# need to point to correct rctable name
+rctables = {("4pass_phaseI", "al"): "rsidis_4pass_27aluminum25_hms.out",
+            ("4pass_phaseI", "c"): "rsidis_4pass_12carbon25_hms.out",
+            ("4pass_phaseI", "cu"): "rsidis_4pass_copper25_hms.out",
+            ("4pass_phaseI", "lh2"): "rsidis_4pass_h2cryo25_hms.out",
+            ("4pass_phaseI", "ld2"): "rsidis_4pass_d2cryo25_hms.out",
+            ("4pass_phaseI", "dummy_up"): "rsidis_4pass_dummyup25_hms.out",
+            ("4pass_phaseI", "dummy_down"): "rsidis_4pass_dummydn25_hms.out",
+            ("5pass_phaseI", "al"): "rsidis_5pass_27aluminum25_hms.out",
+            ("5pass_phaseI", "c"): "rsidis_5pass_12carbon25_hms.out",
+            ("5pass_phaseI", "cu"): "rsidis_5pass_copper25_hms.out",
+            ("5pass_phaseI", "lh2"): "rsidis_5pass_h2cryo25_hms.out",
+            ("5pass_phaseI", "ld2"): "rsidis_5pass_d2cryo25_hms.out",
+            ("5pass_phaseI", "dummy_up"): "rsidis_5pass_dummyup25_hms.out",
+            ("5pass_phaseI", "dummy_down"): "rsidis_5pass_dummydn25_hms.out",
+            ("3pass_phaseII", "al"): "rsidis_3pass26_27aluminum26_hms.out",
+            ("3pass_phaseII", "c"): "rsidis_3pass26_12carbon26_hms.out",
+            ("3pass_phaseII", "cu"): "rsidis_3pass26_copper26_hms.out",
+            ("3pass_phaseII", "lh2"): "rsidis_3pass26_h2cryo26_hms.out",
+            ("3pass_phaseII", "ld2"): "rsidis_3pass26_d2cryo26_hms.out",
+            ("3pass_phaseII", "dummy_up"): "rsidis_3pass26_dummyup26_hms.out",
+            ("3pass_phaseII", "dummy_down"): "rsidis_3pass26_dummydn26_hms.out"}
+
+header = f"!------------------------------------------------------------------------------\n! Input file for MC_SINGLE_ARM\n! Generated by util/generate_infiles.py script, R. Elder 2026\n!------------------------------------------------------------------------------"
+
+for beam_pass in beam_passes:
+    for target in targets:
+        infile_name = f"hmsdis_{beam_pass}_{target}.inp"
+        infile_path = f"{infile_dir}/{infile_name}"
+        thickness = thicknesses[beam_pass][target]
+        density = densities[target]
+        momentum = momenta[beam_pass]
+        angle = angles[beam_pass]
+        rad_length = rad_lengths[target]
+        length = thickness / density
+        beam_x_offset = beam_offsets[beam_pass]["x"]
+        beam_y_offset = beam_offsets[beam_pass]["y"]
+        ztgt_offset = ztgt_offsets[beam_pass][target]
+        spec_x_offset = -0.1 * (2.37 - 0.086 * angle + 0.0012 * angle**2)
+        spec_y_offset = -0.1 * (0.52 - 0.012 * angle + 0.002 * angle**2)
+        ebeam = ebeams[beam_pass]
+        A = As[target]
+        # momentum_bin = nbins[beam_pass]["momentum_bins"]
+        # theta_bin = nbins[beam_pass]["theta_bins"]
+        rctable = rctables[(beam_pass, target)]
+        rctable_path = os.path.join("../rctables", rctable)
+        rcdata = np.loadtxt(rctable_path, skiprows=1)
+        momentum_bin = len(np.unique(rcdata[:, 1]))
+        theta_bin    = len(np.unique(rcdata[:, 2]))
+
+        with open(infile_path, "w") as outfile:
+            outfile.write(f"{header}\n")
+            outfile.write(f"\t{ntrials}\tMonte-Carlo trials\n")
+            outfile.write(f"\t{spec}\t\tSpectrometer (1=HMS, 2=SHMS, 3=..)\n")
+            outfile.write(f"\t{momentum}\t\tSpectrometer momentum (in MeV/c)\n")
+            outfile.write(f"\t{angle}\t\tSpectrometer angle (deg)\n")
+            outfile.write(f"\t-10.0\t\tM.C. DP/P down limit\n")
+            outfile.write(f"\t10.0\t\tM.C. DP/P up limit\n")
+            outfile.write(f"\t-100.0\t\tM.C. Theta (dy/dz) down limit (mr)\n")
+            outfile.write(f"\t100.0\t\tM.C. Theta (dy/dz) up limit (mr)\n")
+            outfile.write(f"\t-100.0\t\tM.C. Phi (dx/dz) down limit (mr)\n")
+            outfile.write(f"\t100.0\t\tM.C. Phi (dx/dz) up limit (mr)\n")
+            outfile.write(f"\t0.060\t\tHoriz beam spot size (cm) (Full width of +/- 3 sigma\n")
+            outfile.write(f"\t0.060\t\tVerti beam spot size (cm) (Full width of +/- 3 sigma\n")
+            outfile.write(f"\t{length:.3f}\t\tLength of target (Full width, cm): rho/t = {density:.3f}/{thickness:.3f}\n")
+            outfile.write(f"\t0.200\t\tRaster full-width x (cm)\n")
+            outfile.write(f"\t0.200\t\tRaster full-width y (cm)\n")
+            outfile.write(f"\t100.0\t\tDP/P Reconstruction cut (half width, %)\n")
+            outfile.write(f"\t100.0\t\tTheta Reconstruction cut (half width, mr)\n")
+            outfile.write(f"\t100.0\t\tPhi Reconstruction cut (half width, mr)\n")
+            outfile.write(f"\t100.0\t\tZTGT Reconstruction cut (half width, cm)\n")
+            outfile.write(f"\t{rad_length}\t\tOne radiation length of target material (cm)\n")
+            outfile.write(f"\t{beam_x_offset}\t\tBeam x offset, +x is beam-left (cm)\n")
+            outfile.write(f"\t{beam_y_offset}\t\tBeam y offset, +y is up (cm)\n")
+            outfile.write(f"\t{ztgt_offset}\t\tZTGT offset, +z = downstream (cm)\n")
+            outfile.write(f"\t{spec_x_offset:.4f}\t\tSpectrometer x offset, +x = down (cm)\n")
+            outfile.write(f"\t{spec_y_offset:.4f}\t\tSpectrometer y offset (cm)\n")
+            outfile.write(f"\t0.0\t\tSpectrometer z offset (cm)\n")
+            outfile.write(f"\t0.0\t\tSpectrometer xp offset (cm)\n")
+            outfile.write(f"\t0.0\t\tSpectrometer yp offset (cm)\n")
+            outfile.write(f"\t0\t\tParticle identification: e=0, p=1, d=2, pi=3, ka=4\n")
+            outfile.write(f"\t1\t\tFlag for multiple scattering, 1=yes\n")
+            outfile.write(f"\t1\t\tFlag for wire chamber smearing\n")
+            outfile.write(f"\t0\t\tFlag for storing all events (including stop_id>0)\n")
+            outfile.write(f"\t0\t\tDoing elastic?\n")
+            outfile.write(f"\t1\t\tUsing rctables?\n")
+            outfile.write(f"\t{ebeam}\t\tBeam energy (MeV)\n")
+            outfile.write(f"\t0\t\tFlag for sieve\n")
+            outfile.write(f"\t{A}\t\tTarget A\n")
+            outfile.write(f"\t{thickness}\t\tTarget thickness, rho*t (g/cm**2)\n")
+            outfile.write(f"\t{momentum_bin}\t\tNumber of momentum bins in rctable\n")
+            outfile.write(f"\t{theta_bin}\t\tNumber of theta bins in rctable\n")
+            outfile.write(f"\t{rctable}\t\tName of rctable")
+            
+                                
+            
+            
+            
+            
+            
