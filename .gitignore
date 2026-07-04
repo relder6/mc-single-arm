@@ -3,5 +3,8 @@ src/mc_single_arm
 #*
 *~
 *#
+infiles
+worksim
+outfiles
 
 
